@@ -228,31 +228,27 @@ class GF_Cashfree extends GFPaymentAddOn
 
         $cashfreeOrderId = $post['orderId'];
 
+        $entryId = explode( '_', $cashfreeOrderId )[0];
+
+        $entry = GFAPI::get_entry($entryId);
+
         $orderRequest = $this->get_cashfree_order($cashfreeOrderId);
 
         $order = json_decode($orderRequest);
 
-        if($order->{'order_status'} != 'PAID') {
-
-            return array(
-                'type' => 'fail_payment',
-                'error' => $order->{'message'}
-            );
-        }
-
-        $entryId = explode( '_', $order->{'order_id'} )[0];
-
-        $entry = GFAPI::get_entry($entryId);
-
         $action = array(
-            'id' => $order->{'order_id'},
+            'id' => $post['orderId'],
             'type' => 'fail_payment',
-            'transaction_id' => $order->{'cf_order_id'},
-            'amount' => $entry['payment_amount'],
+            'transaction_id' => $post['referenceId'],
+            'amount' => $post['orderAmount'],
             'payment_method' => 'cashfree',
             'entry_id' => $entry['id'],
-            'error' => 'Payment Failed',
+            'error' => $post['txMsg'],
         );
+
+        if($order->{'order_status'} != 'PAID') {
+            return $action;
+        }
 
         $success = false;
 
@@ -293,7 +289,7 @@ class GF_Cashfree extends GFPaymentAddOn
         $environmentSetting = $this->get_plugin_setting(self::GF_CASHFREE_ENVIRONMENT);
 
         if($environmentSetting == 'live') {
-            $curlUrl = "https://api.cashfree.com/pg/".$cashfreeOrderId;
+            $curlUrl = "https://api.cashfree.com/pg/orders/".$cashfreeOrderId;
         } else {
             $curlUrl = "https://sandbox.cashfree.com/pg/orders/".$cashfreeOrderId;
         }
@@ -527,19 +523,14 @@ class GF_Cashfree extends GFPaymentAddOn
      */
     public function generate_order_form($redirectUrl, $data)
     {
-        $html = <<<EOT
-    <body onload="document.createElement('form').submit.call(document.getElementById('cashfreeform'))">
-        <form id ="cashfreeform" name="cashfreeform" action="{$redirectUrl}" method="POST">
-    EOT;
+        $html = '<body onload="document.createElement('."'form'".').submit.call(document.getElementById('."'cashfreeform'".'))">
+        <form id ='."'cashfreeform'".' name='."'cashfreeform'".' action="'.$redirectUrl.'" method="POST">';
 
         foreach ($data as $key => $value) {
-            $html .= <<<EOT
-                                <input type="hidden" name="{$key}" value="{$value}">
-EOT;
+            $html .= '<input type="hidden" name="'.$key.'" value="'.$value.'">';
         }
-            $html .= <<<EOT
-            <input type=hidden name="submit" id="submit" value="Continue"/></form></body>
-            EOT;
+            $html .= '<input type="hidden" name="submit" id="submit" value="Continue"/></form></body>';
+            
         echo $html;
     }
 
