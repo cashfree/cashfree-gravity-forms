@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Cashfree for Gravity Forms
+Plugin Name: Cashfree Gravity Forms
 Plugin URI: https://wordpress.org/plugins/cashfree-gravity-forms
 Description: Integrates Gravity Forms with Cashfree Payments, enabling end users to purchase goods and services through Gravity Forms.
 Version: 1.0.0
