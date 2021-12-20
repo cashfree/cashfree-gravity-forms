@@ -363,10 +363,7 @@ class GF_Cashfree extends GFPaymentAddOn
         if (is_wp_error($callback_action) || !$callback_action) {
             return false;
         }
-
-        wp_register_script( 'cashfree_script', plugins_url( '/assets/js/script.js' , __FILE__ ) );
-
-        wp_enqueue_script('cashfree_script');
+        
 
         $entry = null;
 
@@ -390,10 +387,14 @@ class GF_Cashfree extends GFPaymentAddOn
         }
         ?>
         <head>
-            <link rel="stylesheet" type="text/css"
-                  href="<?php echo plugin_dir_url(__FILE__) . 'assets/css/style.css'; ?>">
-            <script type="text/javascript"
-                    src="<?php echo plugin_dir_url(__FILE__) . 'assets/js/script.js' ?>"></script>
+        <?php 
+            echo wp_get_script_tag(
+                array(
+                    'src'      => plugin_dir_url(__FILE__) . 'assets/js/script.js',
+                    'type' => 'text/javascript',
+                )
+            );
+        ?>
         </head>
         <body>
         <div class="invoice-box">
@@ -414,7 +415,13 @@ class GF_Cashfree extends GFPaymentAddOn
                 </tr>
                 <tr class="item">
                     <td> Status</td>
-                    <td> <?php echo $status == 'complete_payment' ? "Success ✅" : "Fail 🚫"; ?> </td>
+                    <td> <?php 
+                        if($status == 'complete_payment'){
+                            echo esc_attr("Success ✅");
+                        } else {
+                            echo esc_attr("Fail 🚫");
+                        }; 
+                    ?> </td>
                 </tr>
                 <?php
                 if ($status == 'complete_payment') {
@@ -443,7 +450,7 @@ class GF_Cashfree extends GFPaymentAddOn
                 </tr>
             </table>
             <p style="font-size:17px;text-align:center;">Go back to the <strong><a
-                        href="<?php echo esc_url( home_url( $wp->request ) ); ?>"><?php echo $refTitle; ?></a></strong> page. </p>
+                        href="<?php echo esc_url( home_url( $wp->request ) ); ?>"><?php echo esc_attr($refTitle); ?></a></strong> page. </p>
             <p style="font-size:17px;text-align:center;"><strong>Note:</strong> This page will automatically redirected
                 to the <strong><?php echo esc_attr( $refTitle ); ?></strong> page in <span id="cf_refresh_timer"></span> seconds.
             </p>
@@ -526,7 +533,24 @@ class GF_Cashfree extends GFPaymentAddOn
         }
             $html .= '<input type="hidden" name="submit" id="submit" value="Continue"/></form></body>';
             
-        echo $html;
+            $allowed_html = array(
+                'body'      => array(
+                    'onload'  => array(),
+                ),
+                'form'      => array(
+                    'id'  => array(),
+                    'name'  => array(),
+                    'action'  => array(),
+                    'method'  => array(),
+                ),
+                'input'      => array(
+                    'type'  => array(),
+                    'name'  => array(),
+                    'id'  => array(),
+                    'value'  => array(),
+                ),
+            );
+        echo wp_kses( $html, $allowed_html );
     }
 
     /**
@@ -593,7 +617,7 @@ class GF_Cashfree extends GFPaymentAddOn
         setcookie(self::CASHFREE_ORDER_ID, $entry[self::CASHFREE_ORDER_ID],
             time() + self::COOKIE_DURATION, COOKIEPATH, COOKIE_DOMAIN, false, true);
 
-        echo $this->generate_cashfree_form($entry, $form);
+        return $this->generate_cashfree_form($entry, $form);
 
     }
 
