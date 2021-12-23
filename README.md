@@ -2,7 +2,7 @@
 
 ### Description
 
-This is the official Cashfree payment gateway plugin for Gravity Forms. Allows you to accept credit cards, debit cards, net banking and wallets with the gravity forms plugin.
+Cashfree Payments is an Indian payment aggregator helping you cater to all your customers' payment needs. Cashfree Payments seamlessly integrates with Gravity Forms to let you accept payments for your Indian business on your WordPress website. With a Cashfree Payments hosted checkout and an intuitive dashboard you can be up and running in no time.
 
 This is compatible with version greater than 1.9.3 gravity forms.
 
@@ -20,7 +20,7 @@ This is compatible with version greater than 1.9.3 gravity forms.
 3. There are 2 action hooks available corresposding to payment failed and payment success. By using these hooks, corresponding action can be implemented.
 
 	a) gform_cashfree_fail_payment with 2 params ($entry, $feed)
-	b) gform_cashfree_complete_payment with 4 params ($payment_transaction_id,$amount, $entry, $feed)
+	b) gform_cashfree_complete_payment with 4 params ($payment_transaction_id, $amount, $entry, $feed)
 
    Above-mentioned hooks can be used to handle the success and failure cases of the payment.
 

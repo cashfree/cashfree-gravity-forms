@@ -14,6 +14,8 @@ Allows you to use Cashfree payment gateway with the gravity forms plugin.
 
 Cashfree Payments is an Indian payment aggregator helping you cater to all your customers' payment needs. Cashfree Payments seamlessly integrates with Gravity Forms to let you accept payments for your Indian business on your WordPress website. With a Cashfree Payments hosted checkout and an intuitive dashboard you can be up and running in no time.
 
+This is compatible with version greater than 1.9.3 gravity forms.
+
 == Installation ==
 
 1. Install the plugin from the [Wordpress Plugin Directory](https://wordpress.org/plugins/cashfree-gravity-forms).
