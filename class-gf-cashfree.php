@@ -395,6 +395,8 @@ class GF_Cashfree extends GFPaymentAddOn
                 )
             );
         ?>
+        <link rel="stylesheet" type="text/css"
+                  href="<?php echo plugin_dir_url(__FILE__) . 'assets/css/style.css'; ?>">
         </head>
         <body>
         <div class="invoice-box">
