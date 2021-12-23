@@ -4,7 +4,7 @@ Plugin Name: Cashfree Gravity Forms
 Tags: cashfree, payments, gravityforms, ecommerce
 Requires at least: 3.9.2
 Tested up to: 5.8
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 

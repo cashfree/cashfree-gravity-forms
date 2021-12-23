@@ -8,7 +8,7 @@ set -euo pipefail
 # The difference is that this script lives in the plugin's git repo & doesn't require an existing SVN repo.
 # Slightly adapted
 
-SVNUSER=cashfree
+SVNUSER=devcashfree
 PLUGINSLUG='cashfree-gravity-forms'
 
 # main config
