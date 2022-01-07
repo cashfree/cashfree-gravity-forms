@@ -1,10 +1,12 @@
 === Cashfree Gravity Forms ===
 Contributors: devcashfree
 Plugin Name: Cashfree Gravity Forms
-Tags: cashfree, payments, gravityforms, ecommerce
+Donate link: https://www.buymeacoffee.com/rajnandan1
+Tags: cashfree payments, gravityforms, E-commerce
 Requires at least: 3.9.2
 Tested up to: 5.8
-Stable tag: 1.2.0
+Stable tag: 1.2.1
+Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,7 +22,7 @@ This is compatible with version greater than 1.9.3 gravity forms.
 
 1. Install the plugin from the [Wordpress Plugin Directory](https://wordpress.org/plugins/cashfree-gravity-forms).
 2. To use this plugin correctly, you need to be able to make network requests. Please make sure that you have the php-curl extension installed.
-3. There are 2 action hooks available corresposding to payment failed and payment success. By using these hooks, corresponding action can be implemented.
+3. There are 2 action hooks available corresponding to payment failed and payment success. By using these hooks, corresponding action can be implemented.
 
 	a) gform_cashfree_fail_payment with 2 params ($entry, $feed)
 	b) gform_cashfree_complete_payment with 4 params ($payment_transaction_id, $amount, $entry, $feed)
@@ -41,6 +43,15 @@ This is compatible with version greater than 1.9.3 gravity forms.
 3. Add a form using gravity form and add fields to the form and save it.
 4. Click on setting of that form and click on Cashfree.
 5. Add a Cashfree feed to support Cashfree payment to the particular form.
+
+== Changelog ==
+
+= 1.2.1 =
+* Adding additional data for payment information.
+
+= 1.2.0 =
+* Initial release.
+* Changing order status after payment of entities.
 
 == Support ==
 
