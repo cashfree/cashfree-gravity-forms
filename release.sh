@@ -42,7 +42,7 @@ git push origin master
 git push origin master --tags
 
 echo "Creating local copy of SVN repo ..."
-svn co $SVNURL $SVNPATH
+svn checkout $SVNURL $SVNPATH
 
 echo "Exporting the HEAD of master from git to the trunk of SVN"
 git checkout-index -a -f --prefix=$SVNPATH/trunk/
@@ -53,11 +53,11 @@ svn propset svn:ignore "release.sh
 .gitignore" "$SVNPATH/trunk/"
 
 # TODO: move assets to git repo
-# echo "Moving assets-wp-repo"
-# mkdir $SVNPATH/assets/
-# mv $SVNPATH/trunk/assets-wp-repo/* $SVNPATH/assets/
-# svn add $SVNPATH/assets/
-# svn delete $SVNPATH/trunk/assets-wp-repo
+echo "Moving assets-wp-repo"
+mkdir $SVNPATH/assets/
+mv $SVNPATH/trunk/assets-wp-repo/* $SVNPATH/assets/
+svn add $SVNPATH/assets/
+svn delete $SVNPATH/trunk/assets-wp-repo
 
 echo "Changing directory to SVN"
 cd "$SVNPATH/trunk/"
