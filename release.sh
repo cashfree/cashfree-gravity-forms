@@ -53,11 +53,11 @@ svn propset svn:ignore "release.sh
 .gitignore" "$SVNPATH/trunk/"
 
 # TODO: move assets to git repo
-echo "Moving assets-wp-repo"
+echo "Moving assets"
 mkdir $SVNPATH/assets/
-mv $SVNPATH/trunk/assets-wp-repo/* $SVNPATH/assets/
+mv $SVNPATH/trunk/assets/* $SVNPATH/assets/
 svn add $SVNPATH/assets/
-svn delete $SVNPATH/trunk/assets-wp-repo
+svn delete $SVNPATH/trunk/assets
 
 echo "Changing directory to SVN"
 cd "$SVNPATH/trunk/"

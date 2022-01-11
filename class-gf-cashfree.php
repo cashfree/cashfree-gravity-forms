@@ -390,13 +390,13 @@ class GF_Cashfree extends GFPaymentAddOn
         <?php 
             echo wp_get_script_tag(
                 array(
-                    'src'      => plugin_dir_url(__FILE__) . 'assets/js/script.js',
+                    'src'      => plugin_dir_url(__FILE__) . 'includes/js/script.js',
                     'type' => 'text/javascript',
                 )
             );
         ?>
         <link rel="stylesheet" type="text/css"
-                  href="<?php echo plugin_dir_url(__FILE__) . 'assets/css/style.css'; ?>">
+                  href="<?php echo plugin_dir_url(__FILE__) . 'includes/css/style.css'; ?>">
         </head>
         <body>
         <div class="invoice-box">
@@ -405,7 +405,7 @@ class GF_Cashfree extends GFPaymentAddOn
                     <td colspan="2">
                         <table>
                             <tr>
-                                <td class="title"><img src="<?php echo plugin_dir_url( __FILE__ ) . 'assets/images/cflogo.svg'; ?>"
+                                <td class="title"><img src="<?php echo plugin_dir_url( __FILE__ ) . 'includes/images/cflogo.svg'; ?>"
                                                        style="width:100%; max-width:300px;"></td>
                             </tr>
                         </table>
