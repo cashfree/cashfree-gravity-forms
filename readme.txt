@@ -5,7 +5,7 @@ Donate link: https://www.buymeacoffee.com/rajnandan1
 Tags: cashfree payments, gravityforms, E-commerce
 Requires at least: 3.9.2
 Tested up to: 5.8
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 Requires PHP: 7.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -46,7 +46,7 @@ This is compatible with version greater than 1.9.3 gravity forms.
 
 == Changelog ==
 
-= 1.2.2 =
+= 1.2.3 =
 * Adding assets for payment information.
 
 = 1.2.1 =
