@@ -469,6 +469,44 @@ class GF_Cashfree extends GFPaymentAddOn
     }
 
     /**
+     * @param array $entry
+     * @param $form
+     * @return bool|void
+     */
+    public function generate_cashfree_order($entry, $form)
+    {
+        $feed = $this->get_payment_feed($entry);
+        $submissionData = $this->get_submission_data($feed, $form, $entry);
+
+        //gravity form method to get value of payment_amount key from entry
+        $paymentAmount = rgar($entry, 'payment_amount');
+
+        //Check if gravity form is executed without any payment
+        if (!$feed || empty($submissionData['payment_amount'])) {
+            return true;
+        }
+
+        //It will be null first time in the entry
+        if (empty($paymentAmount) === true) {
+            $paymentAmount = GFCommon::get_order_total($form, $entry);
+            gform_update_meta($entry['id'], 'payment_amount', $paymentAmount);
+            $entry['payment_amount'] = $paymentAmount;
+        }
+
+        gform_update_meta($entry['id'], self::CASHFREE_ORDER_ID, $entry['id'].'_'.time());
+
+        $entry[self::CASHFREE_ORDER_ID] = $entry['id'].'_'.time();
+
+        GFAPI::update_entry($entry);
+
+        setcookie(self::CASHFREE_ORDER_ID, $entry[self::CASHFREE_ORDER_ID],
+            time() + self::COOKIE_DURATION, COOKIEPATH, COOKIE_DOMAIN, false, true);
+
+        echo $this->generate_cashfree_form($entry, $form);
+
+    }
+
+    /**
      * Generate cashfree form for payment
      * @param $entry
      * @param $form
@@ -521,41 +559,6 @@ class GF_Cashfree extends GFPaymentAddOn
     }
 
     /**
-     * Submit payment request
-     * @param $redirectUrl
-     * @param $data
-     */
-    public function generate_order_form($redirectUrl, $data)
-    {
-        $html = '<body onload="document.createElement('."'form'".').submit.call(document.getElementById('."'cashfreeform'".'))">
-        <form id ='."'cashfreeform'".' name='."'cashfreeform'".' action="'.$redirectUrl.'" method="POST">';
-
-        foreach ($data as $key => $value) {
-            $html .= '<input type="hidden" name="'.$key.'" value="'.$value.'">';
-        }
-            $html .= '<input type="hidden" name="submit" id="submit" value="Continue"/></form></body>';
-            
-            $allowed_html = array(
-                'body'      => array(
-                    'onload'  => array(),
-                ),
-                'form'      => array(
-                    'id'  => array(),
-                    'name'  => array(),
-                    'action'  => array(),
-                    'method'  => array(),
-                ),
-                'input'      => array(
-                    'type'  => array(),
-                    'name'  => array(),
-                    'id'  => array(),
-                    'value'  => array(),
-                ),
-            );
-        echo wp_kses( $html, $allowed_html );
-    }
-
-    /**
      * Generate Signature
      * @param $data
      * @return string
@@ -587,40 +590,55 @@ class GF_Cashfree extends GFPaymentAddOn
     }
 
     /**
-     * @param $entry
-     * @param $form
-     * @return bool|void
+     * Submit payment request
+     * @param $redirectUrl
+     * @param $data
      */
-    public function generate_cashfree_order($entry, $form)
+    public function generate_order_form($redirectUrl, $data)
     {
-        $feed = $this->get_payment_feed($entry);
-        $submissionData = $this->get_submission_data($feed, $form, $entry);
-
-        //Check if gravity form is executed without any payment
-        if (!$feed || empty($submissionData['payment_amount'])) {
-            return true;
+        $html = '<body onload="onLoadSubmit()">';
+         
+        $html .= <<<EOT
+<form method="post" id="cashfreeform" name="cashfreeform" action="{$redirectUrl}">
+EOT;
+        foreach ($data as $key => $value) {
+        $html .= <<<EOT
+        <input type="hidden" name="{$key}" value="{$value}">
+EOT;
         }
-        //gravity form method to get value of payment_amount key from entry
-        $paymentAmount = rgar($entry, 'payment_amount');
-
-        //It will be null first time in the entry
-        if (empty($paymentAmount) === true) {
-            $paymentAmount = GFCommon::get_order_total($form, $entry);
-            gform_update_meta($entry['id'], 'payment_amount', $paymentAmount);
-            $entry['payment_amount'] = $paymentAmount;
-        }
-
-        gform_update_meta($entry['id'], self::CASHFREE_ORDER_ID, $entry['id'].'_'.time());
-
-        $entry[self::CASHFREE_ORDER_ID] = $entry['id'].'_'.time();
-
-        GFAPI::update_entry($entry);
-
-        setcookie(self::CASHFREE_ORDER_ID, $entry[self::CASHFREE_ORDER_ID],
-            time() + self::COOKIE_DURATION, COOKIEPATH, COOKIE_DOMAIN, false, true);
-
-        return $this->generate_cashfree_form($entry, $form);
-
+        $html .= <<<EOT
+        </form>
+        </body>
+        <script language="javascript">
+                function onLoadSubmit() {
+                    document.cashfreeform.submit();
+                }
+        </script>
+EOT;
+        $allowed_html = array(
+            'script' => array(
+                'language' => array(),
+            ),
+            'body'      => array(
+                'onload'  => array(),
+            ),
+            'form'      => array(
+                'id'  => array(),
+                'name'  => array(),
+                'action'  => array(),
+                'method'  => array(),
+            ),
+            'input'      => array(
+                'type'  => array(),
+                'name'  => array(),
+                'id'  => array(),
+                'value'  => array(),
+            ),
+            'button'      => array(
+                'type'  => array(),
+            ),
+        );
+        return wp_kses( $html, $allowed_html );
     }
 
     /**
@@ -761,5 +779,4 @@ class GF_Cashfree extends GFPaymentAddOn
             }
         }
     }
-
 }
