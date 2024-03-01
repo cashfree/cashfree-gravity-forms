@@ -1,5 +1,7 @@
 ## Official Cashfree Payment Gateway plugin for Gravity Forms.
 
+![GitHub](https://img.shields.io/github/license/cashfree/cashfree-gravity-forms) ![Discord](https://img.shields.io/discord/931125665669972018?label=discord) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/cashfree/cashfree-gravity-forms/master) ![GitHub release (with filter)](https://img.shields.io/github/v/release/cashfree/cashfree-gravity-forms?label=latest)  ![GitHub forks](https://img.shields.io/github/forks/cashfree/cashfree-gravity-forms) ![GitHub Repo stars](https://img.shields.io/github/stars/cashfree/cashfree-gravity-forms)
+
 ### Description
 
 Cashfree Payments is an Indian payment aggregator helping you cater to all your customers' payment needs. Cashfree Payments seamlessly integrates with Gravity Forms to let you accept payments for your Indian business on your WordPress website. With a Cashfree Payments hosted checkout and an intuitive dashboard you can be up and running in no time.
@@ -40,3 +42,6 @@ Visit [cashfree.com](https://cashfree.com) for support requests or email us at <
 
 The Cashfree Gravity Forms plugin is released under the GPLv2 license, same as that
 of WordPress. See the LICENSE file for the complete LICENSE text.
+
+### Discord
+Join our [discord server](https://discord.gg/znT6X45qDS) to instantly get connected
