@@ -3,8 +3,8 @@
 Plugin Name: Cashfree Gravity Forms
 Plugin URI: https://wordpress.org/plugins/cashfree-gravity-forms
 Description: Integrates Gravity Forms with Cashfree Payments, enabling end users to purchase goods and services through Gravity Forms.
-Version: 1.2.5
-Stable tag: 1.2.5
+Version: 1.3.0
+Stable tag: 1.3.0
 Author: Dev Cashfree
 Author URI: https://cashfree.com
 Text Domain: cashfree-gravity-forms
@@ -18,7 +18,7 @@ Cashfree Payments is an Indian payment aggregator helping you cater to all your 
 */
 
 
-define('GF_CASHFREE_VERSION', '1.2.5');
+define('GF_CASHFREE_VERSION', '1.3.0');
 
 add_action('admin_post_nopriv_gf_cashfree_notify', "gf_cashfree_notify_init", 10);
 add_action('gform_loaded', array('GF_Cashfree_Bootstrap', 'load'), 5);

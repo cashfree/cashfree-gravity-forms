@@ -14,6 +14,11 @@ class GF_Cashfree extends GFPaymentAddOn
     const GF_CASHFREE_SECRET_KEY    = 'gf_cashfree_secret_key';
     const GF_CASHFREE_ENVIRONMENT   = 'gf_cashfree_environment';
 
+    const CF_ENVIRONMENT_PRODUCTION = "production";
+
+    const CF_ENVIRONMENT_SANDBOX = "sandbox";
+    const API_VERSION_20220901 = '2022-09-01';
+
     /**
      * Cashfree API attributes
      */
@@ -83,7 +88,6 @@ class GF_Cashfree extends GFPaymentAddOn
      * @var bool True if the add-on supports callbacks. Otherwise, false.
      */
     protected $_supports_callbacks = true;
-
 
     /**
      * If true, feeds will be processed asynchronously in the background.
@@ -224,58 +228,49 @@ class GF_Cashfree extends GFPaymentAddOn
      */
     public function callback()
     {
-        $cashfreeOrderId    = sanitize_text_field( $_POST['orderId'] );
-
-        $referenceId        = sanitize_text_field( $_POST['referenceId'] );
-
-        $orderAmount        = sanitize_text_field( $_POST['orderAmount'] );
-
-        $txMsg              = sanitize_text_field( $_POST['txMsg'] );
+        $cashfreeOrderId    = sanitize_text_field( $_REQUEST['order_id'] );
 
         $entryId            = explode( '_', $cashfreeOrderId )[0];
 
         $entry              = GFAPI::get_entry($entryId);
 
-        $order              = $this->get_cashfree_order($cashfreeOrderId);
+        $response              = $this->get_cashfree_order($cashfreeOrderId);
+
+        $http_code = wp_remote_retrieve_response_code( $response );
+
+        $body = json_decode(wp_remote_retrieve_body( $response ));
 
         $action = array(
             'id'                => $cashfreeOrderId,
             'type'              => 'fail_payment',
-            'transaction_id'    => $referenceId,
-            'amount'            => $orderAmount,
             'payment_method'    => 'cashfree',
             'entry_id'          => $entry['id'],
-            'error'             => $txMsg,
         );
 
-        if($order->order_status != 'PAID') {
-            return $action;
-        }
-
-        $success = false;
-
-        $signature = sanitize_text_field( $_POST['signature'] );
-
-        if ((empty($entry) === false) and
-            (empty($referenceId) === false) and
-            (empty($signature) === false)) {
-            $verifySignature = $this->verify_signature($_POST);
-
-            if($verifySignature == false) {
-                $action['error'] = "Signature mismatch error.";
-
-                return $action;
+        if($http_code === 200) {
+            $cfPaymentRespo = $body[0];
+            if ($cfPaymentRespo->payment_status === 'SUCCESS') {
+                if((number_format($cfPaymentRespo->order_amount, 2, '.', '') == number_format($entry["payment_amount"], 2, '.', ''))
+                    && $cfPaymentRespo->payment_currency == $entry["currency"]) {
+                    $action["type"] = 'complete_payment';
+                    $action["transaction_id"] = $cfPaymentRespo->cf_payment_id;
+                    $action["amount"] = $cfPaymentRespo->order_amount;
+                    $action['error'] = null;
+                } else {
+                    $action["transaction_id"] = $cfPaymentRespo->cf_payment_id;
+                    $action["amount"] =$cfPaymentRespo->order_amount;
+                    $action['error'] = $cfPaymentRespo->payment_message;;
+                }
             } else {
-                $success = true;
+                $action["transaction_id"] = $cfPaymentRespo->cf_payment_id;
+                $action["amount"] = $cfPaymentRespo->order_amount;
+                $action['error'] = $cfPaymentRespo->payment_message;
             }
+        } else {
+            $action['error'] = $body->message;
+            $action["transaction_id"] = null;
+            $action["amount"] = $entry["payment_amount"];
         }
-
-        if ($success === true) {
-            $action['type'] = 'complete_payment';
-
-            $action['error'] = null;
-        }
-
         return $action;
     }
 
@@ -293,34 +288,20 @@ class GF_Cashfree extends GFPaymentAddOn
         $environmentSetting = $this->get_plugin_setting(self::GF_CASHFREE_ENVIRONMENT);
 
         if($environmentSetting == 'live') {
-            $url = "https://api.cashfree.com/pg/orders/".$cashfreeOrderId;
+            $url = "https://api.cashfree.com/pg/orders/".$cashfreeOrderId."/payments";
         } else {
-            $url = "https://sandbox.cashfree.com/pg/orders/".$cashfreeOrderId;
+            $url = "https://sandbox.cashfree.com/pg/orders/".$cashfreeOrderId."/payments";
         }
 
         $args = array(
             'headers' => array(
                 'Accept'            => 'application/json',
-                'x-api-version'     => '2021-05-21',
+                'x-api-version'     => self::API_VERSION_20220901,
                 'x-client-id'       => $appId,
                 'x-client-secret'   => $secretKey,
             )
         );
-        $response = wp_remote_get( $url, $args );
-
-        $http_code = wp_remote_retrieve_response_code( $response );
-
-        $body = json_decode(wp_remote_retrieve_body( $response ));
-        
-        if($http_code === 200){
-            return $body;
-        } else {
-            $response = array(
-                'message'   => $body->message,
-                'code'      => 'order_not_found',
-                'type'      => 'invalid_request_error'
-            );
-        }
+        return wp_remote_get( $url, $args );
 
     }
 
@@ -385,6 +366,11 @@ class GF_Cashfree extends GFPaymentAddOn
         } else {
             do_action('gform_cashfree_fail_payment', $entry, $feed);
         }
+        $current_url = get_permalink();
+
+        // Remove query parameters
+        $clean_permalink = remove_query_arg(array_keys($_GET), $current_url);
+
         ?>
         <head>
         <?php 
@@ -452,7 +438,7 @@ class GF_Cashfree extends GFPaymentAddOn
                 </tr>
             </table>
             <p style="font-size:17px;text-align:center;">Go back to the <strong><a
-                        href="<?php echo esc_url( home_url( $wp->request ) ); ?>"><?php echo esc_attr($refTitle); ?></a></strong> page. </p>
+                        href="<?php echo esc_url( $clean_permalink ); ?>"><?php echo esc_attr($refTitle); ?></a></strong> page. </p>
             <p style="font-size:17px;text-align:center;"><strong>Note:</strong> This page will automatically redirected
                 to the <strong><?php echo esc_attr( $refTitle ); ?></strong> page in <span id="cf_refresh_timer"></span> seconds.
             </p>
@@ -460,7 +446,7 @@ class GF_Cashfree extends GFPaymentAddOn
         </div>
         </body>
         <script type="text/javascript">setTimeout(function () {
-                window.location.href = "<?php echo esc_url( home_url( $wp->request ) ); ?>"
+                window.location.href = "<?php echo esc_url( $clean_permalink ); ?>"
             }, 1e3 * cfRefreshTime), setInterval(function () {
                 cfActualRefreshTime > 0 ? (cfActualRefreshTime--, document.getElementById("cf_refresh_timer").innerText = cfActualRefreshTime) : clearInterval(cfActualRefreshTime)
             }, 1e3);</script>
@@ -510,69 +496,87 @@ class GF_Cashfree extends GFPaymentAddOn
      * Generate cashfree form for payment
      * @param $entry
      * @param $form
-     * @return void
+     * @return string
      */
     public function generate_cashfree_form($entry, $form)
     {
-        global $wp;
-
-        $page = home_url( $wp->request );
+        $current_url = get_permalink();
 
         $feed = $this->get_payment_feed($entry, $form);
 
         $customerFields = $this->get_customer_fields($form, $feed, $entry);
 
-        $appId = $this->get_plugin_setting(self::GF_CASHFREE_APP_ID);
-
         $paymentAmount = rgar($entry, 'payment_amount');
 
-        $returnUrl = $page.'?page=gf_cashfree_callback';
+        $returnUrl = $current_url.'?page=gf_cashfree_callback&order_id={order_id}';
 
         $notifyUrl = admin_url('admin-post.php?action=gf_cashfree_notify');
 
         $data = array(
-            'appId'         => $appId,
-            'orderId'       => $entry[self::CASHFREE_ORDER_ID],
-            'orderAmount'   => (int)$paymentAmount,
-            'orderCurrency' => $entry['currency'],
-            'orderNote'     => 'gravityForm',
-            'customerName'  => !empty($customerFields[self::CUSTOMER_FIELDS_NAME]) ? $customerFields[self::CUSTOMER_FIELDS_NAME] : "Test User",
-            'customerEmail' => !empty($customerFields[self::CUSTOMER_FIELDS_EMAIL]) ? $customerFields[self::CUSTOMER_FIELDS_EMAIL] : "user@test.com",
-            'customerPhone' => !empty($customerFields[self::CUSTOMER_FIELDS_CONTACT]) ? $customerFields[self::CUSTOMER_FIELDS_CONTACT] : "9999999999",
-            'returnUrl'     => $returnUrl,
-            'notify_url'    => $notifyUrl
+            "customer_details" => array(
+                "customer_id" => "gravity_form_user",
+                "customer_email" => !empty($customerFields[self::CUSTOMER_FIELDS_EMAIL]) ? $customerFields[self::CUSTOMER_FIELDS_EMAIL] : "user@test.com",
+                "customer_phone" => !empty($customerFields[self::CUSTOMER_FIELDS_CONTACT]) ? $customerFields[self::CUSTOMER_FIELDS_CONTACT] : "9999999999",
+                "customer_name" => !empty($customerFields[self::CUSTOMER_FIELDS_NAME]) ? $customerFields[self::CUSTOMER_FIELDS_NAME] : "Test User",
+            ),
+            "order_meta" => array(
+                "return_url" => $returnUrl,
+                "notify_url" => $notifyUrl
+            ),
+            'order_id'       => $entry[self::CASHFREE_ORDER_ID],
+            'order_amount'   =>  number_format($paymentAmount, 2, '.', ''),
+            'order_currency' => $entry['currency']
         );
-
-        $generatedSignature = $this->generated_signature($data);
-
-        $data['signature'] = $generatedSignature;
 
         $environmentSetting = $this->get_plugin_setting(self::GF_CASHFREE_ENVIRONMENT);
 
         if($environmentSetting == 'live') {
-            $redirectUrl = "https://www.cashfree.com/checkout/post/submit";
+            $curlUrl = "https://api.cashfree.com/pg/orders";
+            $env = self::CF_ENVIRONMENT_PRODUCTION;
         } else {
-            $redirectUrl = "https://test.cashfree.com/billpay/checkout/post/submit";
+            $curlUrl = "https://sandbox.cashfree.com/pg/orders";
+            $env = self::CF_ENVIRONMENT_SANDBOX;
         }
 
-        return $this->generate_order_form($redirectUrl, $data);
+        $response = $this->get_payments_session_id($data,$curlUrl);
+        $http_code = wp_remote_retrieve_response_code( $response );
+        $body     = json_decode(wp_remote_retrieve_body( $response ));
+        if($http_code === 200) {
+            $payment_session_id = $body->payment_session_id;
+
+            return $this->generate_order_form($payment_session_id, $env);
+        } else {
+            do_action('gform_cashfree_fail_payment', $entry, $feed);
+            $errorMessage = $body->message();
+            echo $errorMessage;
+        }
     }
 
     /**
      * Generate Signature
      * @param $data
-     * @return string
+     * @return array|WP_Error
      */
-    public function generated_signature($data)
+    public function get_payments_session_id($data, $curlUrl)
     {
+        $curl_post_field = json_encode( $data );
+        $appId = $this->get_plugin_setting(self::GF_CASHFREE_APP_ID);
         $secretKey = $this->get_plugin_setting(self::GF_CASHFREE_SECRET_KEY);
-        ksort($data);
-        $signatureData = "";
-        foreach ($data as $key => $value){
-            $signatureData .= $key.$value;
-        }
-        $signature = hash_hmac('sha256', $signatureData, $secretKey,true);
-        return base64_encode($signature);
+        $headers = [
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+            'x-api-version' => self::API_VERSION_20220901,
+            'x-client-id' => $appId,
+            'x-client-secret' => $secretKey
+        ];
+
+        $args = [
+            'body'        => $curl_post_field,
+            'timeout'     => 30,
+            'headers'     => $headers,
+        ];
+
+        return wp_remote_post( $curlUrl, $args );
     }
 
     /**
@@ -594,51 +598,48 @@ class GF_Cashfree extends GFPaymentAddOn
      * @param $redirectUrl
      * @param $data
      */
-    public function generate_order_form($redirectUrl, $data)
+    public function generate_order_form($payment_session_id, $env)
     {
-        $html = '<body onload="onLoadSubmit()">';
-         
-        $html .= <<<EOT
-<form method="post" id="cashfreeform" name="cashfreeform" action="{$redirectUrl}">
-EOT;
-        foreach ($data as $key => $value) {
-        $html .= <<<EOT
-        <input type="hidden" name="{$key}" value="{$value}">
-EOT;
-        }
-        $html .= <<<EOT
-        </form>
+        $html_output = <<<EOT
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Cashfree Checkout Integration</title>
+            <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+        </head>
+        <body>
         </body>
-        <script language="javascript">
-                function onLoadSubmit() {
-                    document.cashfreeform.submit();
-                }
+        <script>
+            const cashfree = Cashfree({
+                mode: "$env"
+            });
+             window.addEventListener("DOMContentLoaded", function () {
+                cashfree.checkout({
+                    paymentSessionId: "$payment_session_id",
+                    redirectTarget: "_self",
+                    platformName: "gf"
+                });
+            });
         </script>
-EOT;
+        </html>
+        EOT;
+
         $allowed_html = array(
-            'script' => array(
-                'language' => array(),
-            ),
             'body'      => array(
                 'onload'  => array(),
             ),
-            'form'      => array(
-                'id'  => array(),
-                'name'  => array(),
-                'action'  => array(),
-                'method'  => array(),
+            'head'      => array(
+                'onload'  => array(),
             ),
-            'input'      => array(
-                'type'  => array(),
-                'name'  => array(),
-                'id'  => array(),
-                'value'  => array(),
-            ),
-            'button'      => array(
-                'type'  => array(),
-            ),
+            'script' => array(
+                'src' => array(
+                    'https://sdk.cashfree.com/js/v3/cashfree.js'
+                )
+            )
         );
-        return wp_kses( $html, $allowed_html );
+        return wp_kses( $html_output, $allowed_html );
     }
 
     /**
